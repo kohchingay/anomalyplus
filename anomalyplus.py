@@ -23,9 +23,9 @@ df = load_data()
 # 📈 Exploratory Data Analysis
 st.header("📈 Exploratory Data Analysis")
 
-# Summary statistics
+# Summary statistics for EUR, GBP, USD only
 st.subheader("Descriptive Statistics")
-st.dataframe(df.describe().T)
+st.dataframe(df[["EUR", "GBP", "USD"]].describe().T)
 
 # Line chart
 st.subheader("Historical Exchange Rate Trends")
