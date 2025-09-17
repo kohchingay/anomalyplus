@@ -84,7 +84,7 @@ if anomalous:
 else:
     st.success("✅ No anomalies detected in the entered exchange rates.")
 
-# 💱 Arbitrage logic: only show inputs if anomaly is detected
+# 💱 Arbitrage logic: dynamic and robust
 if anomalous:
     st.sidebar.markdown("### 💱 Enter Pairwise Exchange Rates")
 
@@ -93,18 +93,28 @@ if anomalous:
         others = [c for c in df.columns if c != base]
         arb_input = {}
 
-        for target in others:
-            key = f"{base}_{target}"
-            arb_input[key] = st.sidebar.number_input(f"{base} → {target}", min_value=0.0001, format="%.4f")
+        # Collect all pairwise rates involving base and others
+        for a in others:
+            key1 = f"{base}_{a}"
+            key2 = f"{a}_{base}"
+            arb_input[key1] = st.sidebar.number_input(f"{base} → {a}", min_value=0.0001, format="%.4f")
+            arb_input[key2] = st.sidebar.number_input(f"{a} → {base}", min_value=0.0001, format="%.4f")
 
-        # Build arbitrage paths for this anomalous currency
+        # Also collect rates between others (non-base)
+        for i in range(len(others)):
+            for j in range(len(others)):
+                if i != j:
+                    key = f"{others[i]}_{others[j]}"
+                    arb_input[key] = st.sidebar.number_input(f"{others[i]} → {others[j]}", min_value=0.0001, format="%.4f")
+
+        # Generate all valid 3-step loops: base → A → B → base
         st.subheader(f"💡 Arbitrage Opportunities for {base}")
         best_path = None
         best_profit = 1.0
 
         for a in others:
             for b in others:
-                if a != b and a != base and b != base:
+                if a != b:
                     try:
                         rate1 = arb_input[f"{base}_{a}"]
                         rate2 = arb_input[f"{a}_{b}"]
@@ -116,7 +126,7 @@ if anomalous:
                                 best_profit = product
                                 best_path = (base, a, b, base)
                     except KeyError:
-                        continue
+                        continue  # Skip incomplete paths
 
         if best_path:
             st.success(f"✅ Recommended arbitrage path: {' → '.join(best_path)} | Profit multiplier: {round(best_profit, 4)}")
