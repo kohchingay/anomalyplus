@@ -108,6 +108,7 @@ if anomalous:
                     except KeyError:
                         continue
 
-# 📊 Optional: Show historical data
+# 📊 Optional: Show historical data for EUR, GBP, USD only
 with st.expander("📊 Show Historical Exchange Rates"):
-    st.dataframe(df.describe().T)
+    st.dataframe(df[["EUR", "GBP", "USD"]].describe().T)
+
