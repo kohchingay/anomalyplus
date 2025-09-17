@@ -40,13 +40,17 @@ fig, ax = plt.subplots()
 sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
 st.pyplot(fig)
 
-# Boxplots
+# Boxplots (smaller, side-by-side, excluding SGD)
 st.subheader("Distribution & Outliers")
-for currency in df.columns:
-    fig, ax = plt.subplots()
-    sns.boxplot(data=df, x=currency, ax=ax)
-    ax.set_title(f"{currency} Distribution")
-    st.pyplot(fig)
+
+cols_to_plot = ["EUR", "GBP", "USD"]
+fig, axes = plt.subplots(1, len(cols_to_plot), figsize=(12, 3))
+
+for i, currency in enumerate(cols_to_plot):
+    sns.boxplot(data=df, x=currency, ax=axes[i])
+    axes[i].set_title(f"{currency} Distribution")
+
+st.pyplot(fig)
 
 # 🧠 Train models
 @st.cache_resource
