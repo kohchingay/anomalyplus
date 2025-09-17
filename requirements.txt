@@ -1,0 +1,5 @@
+﻿pandas
+scikit-learn
+matplotlib
+openpyxl
+streamlit
