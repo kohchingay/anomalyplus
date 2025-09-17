@@ -84,7 +84,7 @@ if anomalous:
 else:
     st.success("✅ No anomalies detected in the entered exchange rates.")
 
-# 💱 Arbitrage logic
+# 💱 Arbitrage logic with recommended path
 if anomalous:
     st.sidebar.markdown("### 💱 Enter Pairwise Exchange Rates")
     arb_input = {}
@@ -95,8 +95,11 @@ if anomalous:
             key = f"{base}_{target}"
             arb_input[key] = st.sidebar.number_input(f"{base} → {target}", min_value=0.0001, format="%.4f")
 
-    # Build arbitrage paths
+    # Build arbitrage paths and find best one
     st.subheader("💡 Arbitrage Opportunities")
+    best_path = None
+    best_profit = 1.0
+
     for base in anomalous:
         others = [c for c in df.columns if c != base]
         for a in others:
@@ -109,8 +112,18 @@ if anomalous:
                         product = rate1 * rate2 * rate3
                         if product > 1.01:
                             st.warning(f"Arbitrage path: {base} → {a} → {b} → {base} | Profit multiplier: {round(product, 4)}")
+                            if product > best_profit:
+                                best_profit = product
+                                best_path = (base, a, b, base)
                     except KeyError:
                         continue
+
+    # Display best path
+    if best_path:
+        st.success(f"✅ Recommended arbitrage path: {' → '.join(best_path)} | Profit multiplier: {round(best_profit, 4)}")
+    else:
+        st.info("No arbitrage paths exceed the profit threshold.")
+
 
 # 📊 Optional: Show historical data for EUR, GBP, USD only
 with st.expander("📊 Show Historical Exchange Rates"):
