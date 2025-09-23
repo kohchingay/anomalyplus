@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.ensemble import IsolationForest
 import seaborn as sns
 import matplotlib.pyplot as plt
+import requests
 
 # Title
 st.title("💱 Exchange Rate Anomaly Detector")
@@ -64,11 +65,46 @@ def train_models(df):
 
 models = train_models(df)
 
-# 📥 Sidebar inputs
+FALLBACK_RATES = {"EUR": 1.51, "GBP": 1.75, "USD": 1.36, "SGD": 1.00}
+
+def get_current_exchange_rates():
+    url = "https://api.exchangerate.host/latest?base=SGD"
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        return {
+            "EUR": float(data["rates"].get("EUR", FALLBACK_RATES["EUR"])),
+            "GBP": float(data["rates"].get("GBP", FALLBACK_RATES["GBP"])),
+            "USD": float(data["rates"].get("USD", FALLBACK_RATES["USD"])),
+            "SGD": 1.0
+        }
+    except Exception:
+        return FALLBACK_RATES.copy()
+
+# Only fetch rates ONCE per session.
+if "default_rates" not in st.session_state or not isinstance(st.session_state["default_rates"], dict):
+    st.session_state["default_rates"] = get_current_exchange_rates()
+
+default_rates = st.session_state["default_rates"]
+
+# Defensive: ensure all needed keys exist
+for k in ["EUR", "GBP", "USD", "SGD"]:
+    if k not in default_rates:
+        default_rates[k] = FALLBACK_RATES[k]
+
+# 📥 Sidebar inputs with live defaults
 st.sidebar.header("📥 Enter Today's Exchange Rates")
 user_input = {}
-for currency in df.columns:
-    user_input[currency] = st.sidebar.number_input(f"{currency}", min_value=0.0, format="%.4f")
+for currency in ["EUR", "GBP", "USD", "SGD"]:
+    default_val = float(default_rates.get(currency, FALLBACK_RATES[currency]))
+    user_input[currency] = st.sidebar.number_input(
+        f"{currency}",
+        min_value=0.0,
+        format="%.4f",
+        value=default_val,
+        key=f"input_{currency}"
+    )
 
 # 🔍 Predict anomalies
 user_df = pd.DataFrame([user_input])
