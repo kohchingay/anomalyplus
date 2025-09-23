@@ -119,14 +119,18 @@ for cur in df.columns:
 
 anomalous = [cur for cur, pred in anomalies.items() if pred == -1]
 
-# Display anomaly result with confidence level
+# Display anomaly result with confidence level only for flagged currencies
 st.subheader("🔍 Anomaly Detection Result & Confidence")
-for cur in df.columns:
-    conf = confidence_scores[cur]
-    if anomalies[cur] == -1:
+
+if anomalous:
+    for cur in anomalous:
+        conf = confidence_scores[cur]
         st.error(f"⚠️ {cur}: Anomaly detected at {user_input[cur]} (Confidence Score: {conf:.3f})")
-    else:
-        st.success(f"✅ {cur}: Normal at {user_input[cur]} (Confidence Score: {conf:.3f})")
+    for cur in df.columns:
+        if cur not in anomalous:
+            st.success(f"✅ {cur}: Normal at {user_input[cur]}")
+else:
+    st.success("✅ No anomalies detected in the entered exchange rates.")
 
 # 💱 Arbitrage logic: dynamic and robust
 if anomalous:
