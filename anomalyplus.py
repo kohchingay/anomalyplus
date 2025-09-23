@@ -124,8 +124,17 @@ st.subheader("🔍 Anomaly Detection Result & Confidence")
 
 if anomalous:
     for cur in anomalous:
-        conf = confidence_scores[cur]
-        st.error(f"⚠️ {cur}: Anomaly detected at {user_input[cur]} (Confidence Score: {conf:.3f})")
+        conf_score = confidence_scores[cur]
+        # Calculate min and max decision function scores from training data
+        train_scores = models[cur].decision_function(df[[cur]])
+        min_score, max_score = train_scores.min(), train_scores.max()
+        # Normalize confidence to percentage
+        if max_score > min_score:
+            conf_pct = 100 * (conf_score - min_score) / (max_score - min_score)
+            conf_pct = max(0.0, min(100.0, conf_pct))  # Clamp between 0 and 100
+        else:
+            conf_pct = 0.0  # Fallback if degenerate
+        st.error(f"⚠️ {cur}: Anomaly detected at {user_input[cur]} (Confidence: {conf_pct:.1f}%)")
 else:
     st.success("✅ No anomalies detected in the entered exchange rates.")
 
