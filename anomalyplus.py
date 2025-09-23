@@ -65,7 +65,7 @@ def train_models(df):
 
 models = train_models(df)
 
-FALLBACK_RATES = {"EUR": 1.51, "GBP": 1.75, "USD": 1.36, "SGD": 1.00}
+FALLBACK_RATES = {"EUR": 1.51, "GBP": 1.73, "USD": 1.28, "SGD": 1.00}
 
 def get_current_exchange_rates():
     url = "https://api.exchangerate.host/latest?base=SGD"
