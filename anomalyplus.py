@@ -119,22 +119,16 @@ for cur in df.columns:
 
 anomalous = [cur for cur, pred in anomalies.items() if pred == -1]
 
-# Display anomaly result with confidence level only for flagged currencies
-st.subheader("🔍 Anomaly Detection Result & Confidence")
+# Display anomaly result with model accuracy percentage for flagged currencies
+st.subheader("🔍 Anomaly Detection Result & Model Accuracy")
 
 if anomalous:
     for cur in anomalous:
-        conf_score = confidence_scores[cur]
-        # Calculate min and max decision function scores from training data
-        train_scores = models[cur].decision_function(df[[cur]])
-        min_score, max_score = train_scores.min(), train_scores.max()
-        # Normalize confidence to percentage
-        if max_score > min_score:
-            conf_pct = 100 * (conf_score - min_score) / (max_score - min_score)
-            conf_pct = max(0.0, min(100.0, conf_pct))  # Clamp between 0 and 100
-        else:
-            conf_pct = 0.0  # Fallback if degenerate
-        st.error(f"⚠️ {cur}: Anomaly detected at {user_input[cur]} (Confidence: {conf_pct:.1f}%)")
+        # Predict on training data
+        train_preds = models[cur].predict(df[[cur]])
+        # IsolationForest predicts 1 for normal, -1 for anomaly
+        accuracy = (train_preds == 1).sum() / len(train_preds) * 100
+        st.error(f"⚠️ {cur}: Anomaly detected at {user_input[cur]} (Model accuracy: {accuracy:.1f}%)")
 else:
     st.success("✅ No anomalies detected in the entered exchange rates.")
 
