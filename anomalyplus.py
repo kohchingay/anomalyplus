@@ -124,24 +124,55 @@ else:
 if anomalous:
     st.sidebar.markdown("### 💱 Enter Pairwise Exchange Rates")
 
+    # Prepare a dictionary of all current exchange rates for autofill
+    pairwise_defaults = {}
+    for c1 in df.columns:
+        for c2 in df.columns:
+            if c1 == c2:
+                continue
+            # Compute the default rate from current exchange rates if possible
+            # c1 to c2: rate_c2/rate_c1
+            try:
+                pairwise_defaults[f"{c1}_{c2}"] = float(default_rates[c2]) / float(default_rates[c1])
+            except Exception:
+                pairwise_defaults[f"{c1}_{c2}"] = 1.0
+
     for base in anomalous:
         st.sidebar.markdown(f"**Exchange rates for {base}**")
         others = [c for c in df.columns if c != base]
         arb_input = {}
 
-        # Collect all pairwise rates involving base and others
+        # Collect all pairwise rates involving base and others, with smart default values
         for a in others:
             key1 = f"{base}_{a}"
             key2 = f"{a}_{base}"
-            arb_input[key1] = st.sidebar.number_input(f"{base} → {a}", min_value=0.0001, format="%.4f")
-            arb_input[key2] = st.sidebar.number_input(f"{a} → {base}", min_value=0.0001, format="%.4f")
+            arb_input[key1] = st.sidebar.number_input(
+                f"{base} → {a}",
+                min_value=0.0001,
+                format="%.4f",
+                value=pairwise_defaults.get(key1, 1.0),
+                key=f"arb_{key1}"
+            )
+            arb_input[key2] = st.sidebar.number_input(
+                f"{a} → {base}",
+                min_value=0.0001,
+                format="%.4f",
+                value=pairwise_defaults.get(key2, 1.0),
+                key=f"arb_{key2}"
+            )
 
-        # Also collect rates between others (non-base)
+        # Also collect rates between others (non-base), with smart default values
         for i in range(len(others)):
             for j in range(len(others)):
                 if i != j:
                     key = f"{others[i]}_{others[j]}"
-                    arb_input[key] = st.sidebar.number_input(f"{others[i]} → {others[j]}", min_value=0.0001, format="%.4f")
+                    arb_input[key] = st.sidebar.number_input(
+                        f"{others[i]} → {others[j]}",
+                        min_value=0.0001,
+                        format="%.4f",
+                        value=pairwise_defaults.get(key, 1.0),
+                        key=f"arb_{key}"
+                    )
 
         # Generate all valid 3-step loops: base → A → B → base
         st.subheader(f"💡 Arbitrage Opportunities for {base}")
