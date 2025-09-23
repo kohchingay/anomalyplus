@@ -108,17 +108,25 @@ for currency in ["EUR", "GBP", "USD", "SGD"]:
 
 # 🔍 Predict anomalies
 user_df = pd.DataFrame([user_input])
-anomalies = {cur: models[cur].predict(user_df[[cur]])[0] for cur in df.columns}
+# Predict anomalies and get confidence scores (the further from 0, the higher the confidence)
+anomalies = {}
+confidence_scores = {}
+for cur in df.columns:
+    pred = models[cur].predict(user_df[[cur]])[0]
+    score = models[cur].decision_function(user_df[[cur]])[0]  # Higher = more normal, Lower = more anomalous
+    anomalies[cur] = pred
+    confidence_scores[cur] = score
+
 anomalous = [cur for cur, pred in anomalies.items() if pred == -1]
 
-# Display anomaly result
-st.subheader("🔍 Anomaly Detection Result")
-if anomalous:
-    st.error(f"⚠️ Anomaly detected in: {', '.join(anomalous)}")
-    for cur in anomalous:
-        st.write(f"- {cur}: {user_input[cur]}")
-else:
-    st.success("✅ No anomalies detected in the entered exchange rates.")
+# Display anomaly result with confidence level
+st.subheader("🔍 Anomaly Detection Result & Confidence")
+for cur in df.columns:
+    conf = confidence_scores[cur]
+    if anomalies[cur] == -1:
+        st.error(f"⚠️ {cur}: Anomaly detected at {user_input[cur]} (Confidence Score: {conf:.3f})")
+    else:
+        st.success(f"✅ {cur}: Normal at {user_input[cur]} (Confidence Score: {conf:.3f})")
 
 # 💱 Arbitrage logic: dynamic and robust
 if anomalous:
